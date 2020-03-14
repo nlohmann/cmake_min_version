@@ -1,0 +1,4 @@
+packaging==20.3
+pyparsing==2.4.6
+six==1.14.0
+termcolor==1.1.0
