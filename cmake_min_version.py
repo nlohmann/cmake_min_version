@@ -25,6 +25,11 @@ class ConfigureResult:
         # try to read proposed minimal version from stderr output
         try:
             self.proposed_version = re.findall(r'CMake ([^ ]+) or higher is required.', stderr)[0]
+
+            # support ranges
+            if '..' in self.proposed_version:
+                self.proposed_version = self.proposed_version.split('..')[0]
+            # make sure all versions are major.minor.patch
             if self.proposed_version.count('.') == 1:
                 self.proposed_version += '.0'
         except IndexError:
