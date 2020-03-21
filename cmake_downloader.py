@@ -78,7 +78,8 @@ if __name__ == '__main__':
     default_os = 'macos' if platform.system() == 'Darwin' else 'linux' if platform.system() == 'Linux' else None
 
     parser = argparse.ArgumentParser(description='Download CMake binaries.')
-    parser.add_argument('--os', choices=['macos', 'linux'], default=default_os)
+    parser.add_argument('--os', help='OS to download CMake for (default: {default_os})'.format(default_os=default_os),
+                        choices=['macos', 'linux'], default=default_os)
     parser.add_argument('--latest_release', action='store_true',
                         help='only download the latest release (default: False)')
     parser.add_argument('--latest_patch', action='store_true',
