@@ -1,5 +1,6 @@
 import argparse
 import os.path
+import platform
 import re
 import tarfile
 import tempfile
@@ -58,14 +59,14 @@ def download_and_extract(url: str, path: str):
         tar.close()
 
 
-def create_version_dict() -> Dict[str, str]:
+def create_version_dict(os: str) -> Dict[str, str]:
     tarball_urls = get_tarball_urls()
     result = dict()
 
     for tarball_url in tarball_urls:
         version = re.findall(r'cmake-(([0-9.]+)(-rc[0-9]+)?)', tarball_url)[0][0]
 
-        if 'Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url:
+        if (os == 'macos' and ('Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url)) or (os == 'linux' and 'Linux-x86_64' in tarball_url):
             if version_parse(version).public not in result:
                 result[version_parse(version).public] = tarball_url
 
@@ -73,7 +74,11 @@ def create_version_dict() -> Dict[str, str]:
 
 
 if __name__ == '__main__':
+    # get default value for current system
+    default_os = 'macos' if platform.system() == 'Darwin' else 'linux' if platform.system() == 'Linux' else None
+
     parser = argparse.ArgumentParser(description='Download CMake binaries.')
+    parser.add_argument('--os', choices=['macos', 'linux'], default=default_os)
     parser.add_argument('--latest_release', action='store_true',
                         help='only download the latest release (default: False)')
     parser.add_argument('--latest_patch', action='store_true',
@@ -84,7 +89,7 @@ if __name__ == '__main__':
                         help='path to the CMake binaries (default: "tools")')
     args = parser.parse_args()
 
-    version_dict = create_version_dict()
+    version_dict = create_version_dict(os=args.os)
     versions = sorted([version_parse(version) for version in version_dict.keys()])
 
     if not args.release_candidates:
