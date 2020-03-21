@@ -1,6 +1,8 @@
 import argparse
 import os.path
 import re
+import tarfile
+import tempfile
 from typing import List, Dict
 
 import requests
@@ -32,22 +34,28 @@ def get_tarball_urls() -> List[str]:
     return result
 
 
-def download_file(url: str):
-    response = requests.get(url, stream=True)
-    response.raise_for_status()
-
+def download_and_extract(url: str, path: str):
     file_name_start_pos = url.rfind("/") + 1
     file_name = url[file_name_start_pos:]
 
-    file_size = int(response.headers['Content-Length'])
+    if not os.path.exists(os.path.join(path, file_name.replace('.tar.gz', ''))):
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        file_size = int(response.headers['Content-Length'])
 
-    if not os.path.exists(file_name) or os.path.getsize(file_name) != file_size:
+        tmpdir = tempfile.TemporaryDirectory()
+        full_file_name = os.path.join(tmpdir.name, file_name)
+
         progress = tqdm(total=file_size, unit='B', unit_scale=True, unit_divisor=1024)
-        with open(file_name, 'wb+') as f:
+        with open(full_file_name, 'wb+') as f:
             for data in response:
                 progress.update(len(data))
                 f.write(data)
         progress.close()
+
+        tar = tarfile.open(full_file_name, "r:gz")
+        tar.extractall(path=path)
+        tar.close()
 
 
 def create_version_dict() -> Dict[str, str]:
@@ -93,4 +101,4 @@ if __name__ == '__main__':
 
     for version in versions:
         print('Downloading CMake {version}...'.format(version=version.public))
-        download_file(version_dict[version.public])
+        download_and_extract(url=version_dict[version.public], path=args.tools_directory)
