@@ -84,6 +84,8 @@ if __name__ == '__main__':
                         help='only download the latest release (default: False)')
     parser.add_argument('--latest_patch', action='store_true',
                         help='only download the latest patch version for each release (default: False)')
+    parser.add_argument('--first_minor', action='store_true',
+                        help='only download the first minor version for each release (default: False)')
     parser.add_argument('--release_candidates', action='store_true',
                         help='also consider release candidates (default: False)')
     parser.add_argument('--tools_directory', metavar='DIR', default='tools',
@@ -100,6 +102,12 @@ if __name__ == '__main__':
         result = []
         for major, minor in set([(version.major, version.minor) for version in versions]):
             result.append([version for version in versions if version.major == major and version.minor == minor][-1])
+        versions = sorted(result)
+
+    if args.first_minor:
+        result = []
+        for major, minor in set([(version.major, version.minor) for version in versions]):
+            result.append([version for version in versions if version.major == major and version.minor == minor][0])
         versions = sorted(result)
 
     if args.latest_release:
