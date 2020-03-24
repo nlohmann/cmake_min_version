@@ -28,6 +28,11 @@ cmake_minimum_required(VERSION 3.8.0)
 
 As a result, `~/projects/example/CMakeLists.txt` could be adjusted to require CMake 3.8.0.
 
+## FAQ
+
+- Q: Isn't this a rather naive and inefficent approach to achieve the goal?
+- A: Yes, but I am currently not aware of a better one. I would be happy to replace this repository with a link on a tool that achieves the same goal.
+
 ## Setup
 
 ### In a nutshell
