@@ -7,8 +7,8 @@ import tempfile
 from typing import List, Dict
 
 import requests
-from tqdm import tqdm
 from packaging.version import parse as version_parse
+from tqdm import tqdm
 
 
 def get_folders() -> List[str]:
@@ -66,7 +66,8 @@ def create_version_dict(os: str) -> Dict[str, str]:
     for tarball_url in tarball_urls:
         version = re.findall(r'cmake-(([0-9.]+)(-rc[0-9]+)?)', tarball_url)[0][0]
 
-        if (os == 'macos' and ('Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url)) or (os == 'linux' and 'Linux-x86_64' in tarball_url):
+        if (os == 'macos' and ('Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url)) \
+                or (os == 'linux' and 'Linux-x86_64' in tarball_url):
             if version_parse(version).public not in result:
                 result[version_parse(version).public] = tarball_url
 
