@@ -1,5 +1,6 @@
 import argparse
 import glob
+import platform
 import math
 import os.path
 import re
@@ -46,8 +47,13 @@ class ConfigureResult:
 
 def get_cmake_binaries(tools_dir: str) -> List[CMakeBinary]:
     binaries = []  # type: List[CMakeBinary]
+    mGlob = []
+    if platform.system() == "Windows":
+        mGlob = glob.glob(tools_dir + '/**/bin/cmake.exe', recursive=True)
+    else:
+        mGlob = glob.glob(tools_dir + '/**/bin/cmake', recursive=True)
 
-    for filename in glob.glob(tools_dir + '/**/bin/cmake', recursive=True):
+    for filename in mGlob:
         try:
             version = re.findall(r'cmake-([^-]+)-', filename)[0]
             binaries.append(CMakeBinary(version, os.path.abspath(filename)))
@@ -108,14 +114,53 @@ def binary_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMake
     return versions[last_success_idx] if last_success_idx is not None else None
 
 
+def full_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBinary]:
+    versions = get_cmake_binaries(tools_dir)  # type: List[CMakeBinary]
+    longest_version_string = max([len(cmake.version) for cmake in versions]) + 1  # type: int
+
+    lower_idx = 0  # type: int
+    upper_idx = len(versions) - 1  # type: int
+    last_success_idx = None  # type: Optional[int]
+
+    steps = 0  # type: int
+
+    for cmake_binary in versions:
+        steps += 1
+        remaining_versions = upper_idx - lower_idx + 1  # type: int
+        remaining_steps = int(math.ceil(math.log2(remaining_versions)))  # type: int
+
+        print('[{progress:3.0f}%] CMake {cmake_version:{longest_version_string}}'.format(
+            progress=100.0 * float(steps - 1) / (steps + remaining_steps),
+            cmake_version=cmake_binary.version, longest_version_string=longest_version_string), end='', flush=True
+        )
+
+        result = try_configure(cmake_binary.binary, cmake_parameters)  # type: ConfigureResult
+
+        if result.success:
+            print(colored('✔ works', 'green'))
+            if not last_success_idx or last_success_idx > steps - 1:
+                last_success_idx = steps - 1
+        else:
+            print(colored('✘ error', 'red'))
+            if result.reason:
+                print('       {reason}'.format(reason=result.reason))
+
+    return versions[last_success_idx] if last_success_idx is not None else None
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Find the minimal required CMake version for a project.')
     parser.add_argument('params', type=str, nargs='+', help='parameters to pass to CMake')
     parser.add_argument('--tools_directory', metavar='DIR', default='tools',
                         help='path to the CMake binaries (default: "tools")')
+    parser.add_argument('--full_search', default=False,
+                        help='Searches using a top down approach instead of a binary search (default: False)')
     args = parser.parse_args()
 
-    working_version = binary_search(args.params, args.tools_directory)
+    if args.full_search:
+        working_version = full_search(args.params, args.tools_directory)
+    else:
+        working_version = binary_search(args.params, args.tools_directory)
 
     if working_version:
         print('[100%] Minimal working version: {cmake} {version}'.format(
