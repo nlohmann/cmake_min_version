@@ -10,6 +10,8 @@ from typing import List, Optional, NamedTuple
 
 from packaging.version import parse as version_parse
 from termcolor import colored
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 
 class CMakeBinary(NamedTuple):
