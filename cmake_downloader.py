@@ -40,7 +40,9 @@ def download_and_extract(url: str, path: str):
     file_name_start_pos = url.rfind("/") + 1
     file_name = url[file_name_start_pos:]
     file_wo_ext, file_ext = os.path.splitext(file_name)
-
+    if file_ext != ".zip":
+        file_wo_ext, file_ext2 = os.path.splitext(file_wo_ext)
+        file_ext=file_ext+file_ext2
     if not os.path.exists(os.path.join(path, file_wo_ext)):
         response = requests.get(url, stream=True)
         response.raise_for_status()
