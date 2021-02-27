@@ -8,11 +8,13 @@ on:
   - cron:  '0 0 * * 0'
 
 jobs:
+
   test:
     name: "Test"
     strategy:
       matrix:
         version_test: ["NoVersion","3.1"]
+        
     runs-on: ubuntu-latest
     steps:
     
