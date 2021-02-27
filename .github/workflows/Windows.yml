@@ -1,0 +1,32 @@
+name: Windows
+
+on:
+  push:
+  pull_request:
+  schedule:
+  #Every Sunday at midnight
+  - cron:  '0 0 * * 0'
+
+jobs:
+  test:
+    name: "Test"
+    runs-on: windows-latest
+    steps:
+    
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+      
+      - name: Cache tools
+        uses: actions/cache@v2
+        with:
+          path: tools
+          key: ${{ runner.os }}-cmakes
+          
+      - name: "Download cmake packages"
+        run: |
+            python3 -mvenv venv
+            venv/bin/pip3 install -r requirements.txt
+            venv/bin/python3 cmake_downloader.py --latest_patch
