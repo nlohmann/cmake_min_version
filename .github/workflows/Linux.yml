@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         version_test: ["NoVersion","3.1"]
-    runs-on: linux-latest
+    runs-on: ubuntu-latest
     steps:
     
       - name: Setup Python
