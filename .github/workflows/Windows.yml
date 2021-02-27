@@ -28,5 +28,5 @@ jobs:
       - name: "Download cmake packages"
         run: |
             python3 -mvenv venv
-            venv/bin/pip3 install -r requirements.txt
-            venv/bin/python3 cmake_downloader.py --latest_patch
+            venv\bin\pip3 install -r requirements.txt
+            venv\bin\python3 cmake_downloader.py --latest_patch
