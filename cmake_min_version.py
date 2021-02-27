@@ -68,7 +68,7 @@ def get_cmake_binaries(tools_dir: str) -> List[CMakeBinary]:
 
 def try_configure(binary: str, cmake_parameters: List[str]) -> ConfigureResult:
     tmpdir = tempfile.TemporaryDirectory()
-    proc = subprocess.Popen([binary] + cmake_parameters + ['-Wno-dev'],
+    proc = subprocess.Popen([binary] + ['-S'] + cmake_parameters + ['-Wno-dev'],
                             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, cwd=tmpdir.name)
     proc.wait()
 
@@ -137,11 +137,11 @@ def full_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBi
         result = try_configure(cmake_binary.binary, cmake_parameters)  # type: ConfigureResult
 
         if result.success:
-            print(colored('✔ works', 'green'))
+            print(colored("\U00002714 works",'green'))
             if not last_success_idx or last_success_idx > steps - 1:
                 last_success_idx = steps - 1
         else:
-            print(colored('✘ error', 'red'))
+            print(colored("\U0000274C error",'red'))
             if result.reason:
                 print('       {reason}'.format(reason=result.reason))
 
