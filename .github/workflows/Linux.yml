@@ -32,7 +32,7 @@ jobs:
     name: "Install cmake packages"
     needs: setup
     runs-on: ubuntu-latest
-    step:
+    steps:
       
       -name: "Download cmake packages"
       run: |
