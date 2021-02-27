@@ -35,10 +35,10 @@ jobs:
     step:
       
       -name: "Download cmake packages"
-        run: |
-             python -mvenv venv
-             venv/bin/pip install -r requirements.txt
-             venv/bin/python cmake_downloader.py --latest_patch
+      run: |
+            python -mvenv venv
+            venv/bin/pip install -r requirements.txt
+            venv/bin/python cmake_downloader.py --latest_patch
 
 
         
