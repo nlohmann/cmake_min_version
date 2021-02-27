@@ -10,6 +10,9 @@ on:
 jobs:
   test:
     name: "Test"
+    strategy:
+      matrix:
+        version_test: ["NoVersion","3.1"]
     runs-on: macos-latest
     steps:
     
@@ -30,3 +33,4 @@ jobs:
             python3 -mvenv venv
             venv/bin/pip3 install -r requirements.txt
             venv/bin/python3 cmake_downloader.py --latest_patch
+            venv/bin/python3 cmake_min_version.py --full_search FULL_SEARCH $GITHUB_WORKSPACE/tests/${{ matrix.version_test }}/
