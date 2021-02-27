@@ -1,4 +1,4 @@
-name: Linux
+name: Windows
 
 on:
   push:
@@ -8,14 +8,12 @@ on:
   - cron:  '0 0 * * 0'
 
 jobs:
-
   test:
     name: "Test"
     strategy:
       matrix:
         version_test: ["NoVersion","3.1"]
-        
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     
       - name: Setup Python
@@ -32,7 +30,7 @@ jobs:
           
       - name: "Download cmake packages"
         run: |
-            python3 -mvenv venv
-            venv/bin/pip3 install -r requirements.txt
-            venv/bin/python3 cmake_downloader.py --latest_patch
-            venv/bin/python3 cmake_min_version.py --full_search FULL_SEARCH $GITHUB_WORKSPACE/tests/${{ matrix.version_test }}/
+            python -m venv venv
+            .\venv\Scripts\pip.exe install -r .\requirements.txt
+            .\venv\Scripts\python.exe cmake_downloader.py --latest_patch
+            .\venv\Scripts\python.exe cmake_min_version.py --full_search FULL_SEARCH $GITHUB_WORKSPACE\tests\${{ matrix.version_test }}\
