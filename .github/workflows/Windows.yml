@@ -27,6 +27,6 @@ jobs:
           
       - name: "Download cmake packages"
         run: |
-            python -m venv c:\myenv
-            venv\bin\pip install -r requirements.txt
-            venv\bin\python3 cmake_downloader.py --latest_patch
+            python -m venv venv
+            .\venv\Scripts\pip.exe install -r .\requirements.txt
+            .\venv\bin\python.exe cmake_downloader.py --latest_patch
