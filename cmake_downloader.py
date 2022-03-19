@@ -124,6 +124,6 @@ if __name__ == '__main__':
     if args.latest_release:
         versions = versions[-1:]
 
-    for version in versions:
-        print('Downloading CMake {version}...'.format(version=version.public))
+    for idx, version in enumerate(versions):
+        print('Downloading CMake {version} ({count}/{total})...'.format(version=version.public, count=idx+1, total=len(versions)))
         download_and_extract(url=version_dict[version.public], path=args.tools_directory)
