@@ -72,8 +72,8 @@ def create_version_dict(os: str) -> Dict[str, str]:
     for tarball_url in tarball_urls:
         version = re.findall(r'cmake-(([0-9.]+)(-rc[0-9]+)?)', tarball_url)[0][0]
 
-        if (os == 'macos' and ('Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url)) \
-                or (os == 'linux' and 'Linux-x86_64' in tarball_url) \
+        if (os == 'macos' and ('Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url or 'macos-universal' in tarball_url)) \
+                or (os == 'linux' and ('Linux-x86_64' in tarball_url or 'linux-x86_64' in tarball_url)) \
                 or (os == 'windows' and ('win32-x86' in tarball_url or 'win64-x64' in tarball_url)):
             if version_parse(version).public not in result or \
                     (version_parse(version).public in result and 'win64-x64' in tarball_url):
