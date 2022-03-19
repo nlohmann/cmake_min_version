@@ -19,4 +19,4 @@ jobs:
         run: |
           python -m venv venv
           .\venv\Scripts\pip.exe install -r .\requirements.txt
-          .\venv\Scripts\python.exe cmake_downloader.py --latest_patch
+          .\venv\Scripts\python.exe cmake_downloader.py --latest_release
