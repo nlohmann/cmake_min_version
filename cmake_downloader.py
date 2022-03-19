@@ -21,7 +21,7 @@ def get_folders() -> List[str]:
 
 
 def get_tarball_urls_version(base_version: str) -> List[str]:
-    url = 'https://cmake.org/files/v{base_version}/'.format(base_version=base_version)
+    url = f'https://cmake.org/files/v{base_version}/'
     html = requests.get(url).text
     return sorted([url + filename for filename in re.findall(r'>(cmake-[0-9rc.]+-[^.]+(?:\.tar\.gz|\.zip))', html)])
 
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     default_os = 'macos' if platform.system() == 'Darwin' else 'linux' if platform.system() == 'Linux' else 'windows' if platform.system() == 'Windows' else None
 
     parser = argparse.ArgumentParser(description='Download CMake binaries.')
-    parser.add_argument('--os', help='OS to download CMake for (default: {default_os})'.format(default_os=default_os),
+    parser.add_argument('--os', help=f'OS to download CMake for (default: {default_os})',
                         choices=['macos', 'linux', 'windows'], default=default_os)
     parser.add_argument('--latest_release', action='store_true',
                         help='only download the latest release (default: False)')
@@ -125,5 +125,5 @@ if __name__ == '__main__':
         versions = versions[-1:]
 
     for idx, version in enumerate(versions):
-        print('Downloading CMake {version} ({count}/{total})...'.format(version=version.public, count=idx+1, total=len(versions)))
+        print(f'Downloading CMake {version.public} ({idx+1}/{len(versions)})...')
         download_and_extract(url=version_dict[version.public], path=args.tools_directory)
