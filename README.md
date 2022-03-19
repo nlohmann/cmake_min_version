@@ -1,5 +1,7 @@
 # cmake_min_version
 
+[![Cross-platform](https://github.com/nlohmann/cmake_min_version/actions/workflows/all.yml/badge.svg)](https://github.com/nlohmann/cmake_min_version/actions/workflows/all.yml)
+
 Every CMake project requires a call to [`cmake_minimum_required`](http://cmake.org/cmake/help/v3.16/command/cmake_minimum_required.html) to set the minimally required CMake version. However, CMake gives no guidance what this version may be, and a lot of projects just take the current CMake version or whatever the IDE is proposing as default. This is a problem, because some platforms don't always provide the latest CMake version, and a lot of trial and error is needed before projects can be used.
 
 `cmake_min_version` is a script to determine the minimal working version of CMake for a given project. It does not do any magic, but just performs a binary search using a pool of CMake binaries and basically implements the "trial and error" in an efficient way.
@@ -37,7 +39,7 @@ As a result, `~/projects/example/CMakeLists.txt` could be adjusted to require CM
 
 ### In a nutshell
 
-1. Install a Python virtual requirement.
+1. Install a Python virtual requirement (Python 3.6 or later).
 2. Download CMake binaries.
 
 ### Virtual Environment
@@ -127,7 +129,7 @@ The script downloads and unpacks different versions of CMake into the `tools` fo
 
 The code is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
-Copyright &copy; 2020 [Niels Lohmann](http://nlohmann.me)
+Copyright &copy; 2020-2022 [Niels Lohmann](http://nlohmann.me)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import os.path
 import platform
@@ -19,7 +21,7 @@ def get_folders() -> List[str]:
 
 
 def get_tarball_urls_version(base_version: str) -> List[str]:
-    url = 'https://cmake.org/files/v{base_version}/'.format(base_version=base_version)
+    url = f'https://cmake.org/files/v{base_version}/'
     html = requests.get(url).text
     return sorted([url + filename for filename in re.findall(r'>(cmake-[0-9rc.]+-[^.]+(?:\.tar\.gz|\.zip))', html)])
 
@@ -37,7 +39,7 @@ def get_tarball_urls() -> List[str]:
 
 
 def download_and_extract(url: str, path: str):
-    file_name_start_pos = url.rfind("/") + 1
+    file_name_start_pos = url.rfind('/') + 1
     file_name = url[file_name_start_pos:]
     file_wo_ext, file_ext = os.path.splitext(file_name)
 
@@ -56,11 +58,11 @@ def download_and_extract(url: str, path: str):
                 f.write(data)
         progress.close()
 
-        if file_ext == ".zip":
-            with zipfile.ZipFile(full_file_name, 'r') as zip_ref:
+        if file_ext == '.zip':
+            with zipfile.ZipFile(full_file_name, mode='r') as zip_ref:
                 zip_ref.extractall(path)
         else:
-            tar = tarfile.open(full_file_name, "r:gz")
+            tar = tarfile.open(full_file_name, mode='r:gz')
             tar.extractall(path=path)
             tar.close()
 
@@ -72,8 +74,8 @@ def create_version_dict(os: str) -> Dict[str, str]:
     for tarball_url in tarball_urls:
         version = re.findall(r'cmake-(([0-9.]+)(-rc[0-9]+)?)', tarball_url)[0][0]
 
-        if (os == 'macos' and ('Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url)) \
-                or (os == 'linux' and 'Linux-x86_64' in tarball_url) \
+        if (os == 'macos' and ('Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url or 'macos-universal' in tarball_url)) \
+                or (os == 'linux' and ('Linux-x86_64' in tarball_url or 'linux-x86_64' in tarball_url)) \
                 or (os == 'windows' and ('win32-x86' in tarball_url or 'win64-x64' in tarball_url)):
             if version_parse(version).public not in result or \
                     (version_parse(version).public in result and 'win64-x64' in tarball_url):
@@ -87,7 +89,7 @@ if __name__ == '__main__':
     default_os = 'macos' if platform.system() == 'Darwin' else 'linux' if platform.system() == 'Linux' else 'windows' if platform.system() == 'Windows' else None
 
     parser = argparse.ArgumentParser(description='Download CMake binaries.')
-    parser.add_argument('--os', help='OS to download CMake for (default: {default_os})'.format(default_os=default_os),
+    parser.add_argument('--os', help=f'OS to download CMake for (default: {default_os})',
                         choices=['macos', 'linux', 'windows'], default=default_os)
     parser.add_argument('--latest_release', action='store_true',
                         help='only download the latest release (default: False)')
@@ -122,6 +124,6 @@ if __name__ == '__main__':
     if args.latest_release:
         versions = versions[-1:]
 
-    for version in versions:
-        print('Downloading CMake {version}...'.format(version=version.public))
+    for idx, version in enumerate(versions):
+        print(f'Downloading CMake {version.public} ({idx+1}/{len(versions)})...')
         download_and_extract(url=version_dict[version.public], path=args.tools_directory)

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import glob
 import platform
@@ -47,22 +49,19 @@ class ConfigureResult:
 
 def get_cmake_binaries(tools_dir: str) -> List[CMakeBinary]:
     binaries = []  # type: List[CMakeBinary]
-    mGlob = []
     if platform.system() == "Windows":
-        mGlob = glob.glob(tools_dir + '/**/bin/cmake.exe', recursive=True)
+        filenames = glob.glob(tools_dir + '/**/bin/cmake.exe', recursive=True)
     else:
-        mGlob = glob.glob(tools_dir + '/**/bin/cmake', recursive=True)
+        filenames = glob.glob(tools_dir + '/**/bin/cmake', recursive=True)
 
-    for filename in mGlob:
+    for filename in filenames:
         try:
             version = re.findall(r'cmake-([^-]+)-', filename)[0]
             binaries.append(CMakeBinary(version, os.path.abspath(filename)))
         except IndexError:
             pass
 
-    print('Found {count} CMake binaries from directory {tools_dir}\n'.format(
-        count=len(binaries), tools_dir=tools_dir)
-    )
+    print(f'Found {len(binaries)} CMake binaries from directory {tools_dir}\n')
     return sorted(binaries, key=lambda x: version_parse(x.version))
 
 
@@ -107,7 +106,7 @@ def binary_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMake
         else:
             print(colored('✘ error', 'red'))
             if result.reason:
-                print('       {reason}'.format(reason=result.reason))
+                print(f'       {result.reason}')
             proposed_binary = [x for x in versions if x.version == result.proposed_version]
             lower_idx = versions.index(proposed_binary[0]) if len(proposed_binary) else mid_idx + 1
 
@@ -143,7 +142,7 @@ def full_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBi
         else:
             print(colored('✘ error', 'red'))
             if result.reason:
-                print('       {reason}'.format(reason=result.reason))
+                print(f'       {result.reason}')
 
     return versions[last_success_idx] if last_success_idx is not None else None
 
@@ -166,7 +165,7 @@ if __name__ == '__main__':
         print('[100%] Minimal working version: {cmake} {version}'.format(
             cmake=colored('CMake', 'blue'), version=colored(working_version.version, 'blue')))
 
-        print('\ncmake_minimum_required(VERSION {version})'.format(version=working_version.version))
+        print(f'\ncmake_minimum_required(VERSION {working_version.version})')
 
     else:
         print('[100%] {message}'.format(message=colored('ERROR: Could not find working version.', 'red')))
