@@ -37,7 +37,7 @@ As a result, `~/projects/example/CMakeLists.txt` could be adjusted to require CM
 
 ### In a nutshell
 
-1. Install a Python virtual requirement.
+1. Install a Python virtual requirement (Python 3.6 or later).
 2. Download CMake binaries.
 
 ### Virtual Environment
