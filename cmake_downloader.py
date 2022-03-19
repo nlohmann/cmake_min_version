@@ -39,7 +39,7 @@ def get_tarball_urls() -> List[str]:
 
 
 def download_and_extract(url: str, path: str):
-    file_name_start_pos = url.rfind("/") + 1
+    file_name_start_pos = url.rfind('/') + 1
     file_name = url[file_name_start_pos:]
     file_wo_ext, file_ext = os.path.splitext(file_name)
 
@@ -58,11 +58,11 @@ def download_and_extract(url: str, path: str):
                 f.write(data)
         progress.close()
 
-        if file_ext == ".zip":
-            with zipfile.ZipFile(full_file_name, 'r') as zip_ref:
+        if file_ext == '.zip':
+            with zipfile.ZipFile(full_file_name, mode='r') as zip_ref:
                 zip_ref.extractall(path)
         else:
-            tar = tarfile.open(full_file_name, "r:gz")
+            tar = tarfile.open(full_file_name, mode='r:gz')
             tar.extractall(path=path)
             tar.close()
 

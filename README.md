@@ -1,5 +1,7 @@
 # cmake_min_version
 
+[![Cross-platform](https://github.com/nlohmann/cmake_min_version/actions/workflows/all.yml/badge.svg)](https://github.com/nlohmann/cmake_min_version/actions/workflows/all.yml)
+
 Every CMake project requires a call to [`cmake_minimum_required`](http://cmake.org/cmake/help/v3.16/command/cmake_minimum_required.html) to set the minimally required CMake version. However, CMake gives no guidance what this version may be, and a lot of projects just take the current CMake version or whatever the IDE is proposing as default. This is a problem, because some platforms don't always provide the latest CMake version, and a lot of trial and error is needed before projects can be used.
 
 `cmake_min_version` is a script to determine the minimal working version of CMake for a given project. It does not do any magic, but just performs a binary search using a pool of CMake binaries and basically implements the "trial and error" in an efficient way.

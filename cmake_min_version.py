@@ -49,13 +49,12 @@ class ConfigureResult:
 
 def get_cmake_binaries(tools_dir: str) -> List[CMakeBinary]:
     binaries = []  # type: List[CMakeBinary]
-    mGlob = []
     if platform.system() == "Windows":
-        mGlob = glob.glob(tools_dir + '/**/bin/cmake.exe', recursive=True)
+        filenames = glob.glob(tools_dir + '/**/bin/cmake.exe', recursive=True)
     else:
-        mGlob = glob.glob(tools_dir + '/**/bin/cmake', recursive=True)
+        filenames = glob.glob(tools_dir + '/**/bin/cmake', recursive=True)
 
-    for filename in mGlob:
+    for filename in filenames:
         try:
             version = re.findall(r'cmake-([^-]+)-', filename)[0]
             binaries.append(CMakeBinary(version, os.path.abspath(filename)))
