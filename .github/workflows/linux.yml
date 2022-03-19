@@ -1,0 +1,22 @@
+name: Linux
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test_downloader:
+    name: "Test cmake_downloader.py"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v3
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: "Download cmake packages"
+        run: |
+          python3 -mvenv venv
+          venv/bin/pip3 install -r requirements.txt
+          venv/bin/python3 cmake_downloader.py --latest_patch

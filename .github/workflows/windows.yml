@@ -1,0 +1,22 @@
+name: Windows
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test_downloader:
+    name: "Test cmake_downloader.py"
+    runs-on: windows-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v3
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: "Download cmake packages"
+        run: |
+          python -m venv venv
+          .\venv\Scripts\pip.exe install -r .\requirements.txt
+          .\venv\Scripts\python.exe cmake_downloader.py --latest_patch
