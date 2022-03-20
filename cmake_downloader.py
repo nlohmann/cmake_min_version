@@ -39,9 +39,10 @@ def get_tarball_urls() -> List[str]:
 
 
 def download_and_extract(url: str, path: str):
+    # derive file directory name from URL
     file_name_start_pos = url.rfind('/') + 1
     file_name = url[file_name_start_pos:]
-    file_wo_ext, file_ext = os.path.splitext(file_name)
+    file_wo_ext = file_name.replace('.tar.gz', '').replace('.zip', '')
 
     if not os.path.exists(os.path.join(path, file_wo_ext)):
         response = requests.get(url, stream=True)
@@ -58,13 +59,12 @@ def download_and_extract(url: str, path: str):
                 f.write(data)
         progress.close()
 
-        if file_ext == '.zip':
+        if url.endswith('.zip'):
             with zipfile.ZipFile(full_file_name, mode='r') as zip_ref:
                 zip_ref.extractall(path)
         else:
-            tar = tarfile.open(full_file_name, mode='r:gz')
-            tar.extractall(path=path)
-            tar.close()
+            with tarfile.open(full_file_name, mode='r:gz') as tar:
+                tar.extractall(path=path)
 
 
 def create_version_dict(os: str) -> Dict[str, str]:
