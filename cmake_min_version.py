@@ -79,7 +79,7 @@ def binary_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMake
     versions = get_cmake_binaries(tools_dir)  # type: List[CMakeBinary]
     cmake_versions = [len(cmake.version) for cmake in versions]
     if len(cmake_versions) == 0:
-        print(colored('Error: No cmake versions found in the tool dir. Make sure to run the cmake_downloader script first.', 'red'))
+        print(colored('Error: No CMake versions found in the tool dir. Make sure to run the cmake_downloader script first.', 'red'))
         sys.exit(1)
     longest_version_string = max(cmake_versions) + 1  # type: int
 
