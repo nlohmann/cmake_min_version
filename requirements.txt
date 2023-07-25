@@ -1,4 +1,4 @@
-tqdm>=4.63.0
-requests>=2.27.1
-packaging>=21.3
-termcolor>=1.1.0
+tqdm==4.65.0
+requests==2.31.0
+packaging==23.1
+termcolor==2.3.0
