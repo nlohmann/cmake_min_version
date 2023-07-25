@@ -76,9 +76,9 @@ def create_version_dict(os: str) -> Dict[str, str]:
 
         if (os == 'macos' and ('Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url or 'macos-universal' in tarball_url)) \
                 or (os == 'linux' and ('Linux-x86_64' in tarball_url or 'linux-x86_64' in tarball_url)) \
-                or (os == 'windows' and ('win32-x86' in tarball_url or 'win64-x64' in tarball_url)):
+                or (os == 'windows' and ('win32-x86' in tarball_url or 'win64-x64' in tarball_url or 'windows-x86_64' in tarball_url)):
             if version_parse(version).public not in result or \
-                    (version_parse(version).public in result and 'win64-x64' in tarball_url):
+                    (version_parse(version).public in result and ('win64-x64' in tarball_url or 'windows-x86_64' in tarball_url)):
                 result[version_parse(version).public] = tarball_url
 
     return result
@@ -105,6 +105,7 @@ if __name__ == '__main__':
 
     version_dict = create_version_dict(os=args.os)
     versions = sorted([version_parse(version) for version in version_dict.keys()])
+    print(f'Found {len(versions)} versions from {versions[0]} to {versions[-1]}.')
 
     if not args.release_candidates:
         versions = [version for version in versions if not version.is_prerelease]
