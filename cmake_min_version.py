@@ -7,6 +7,7 @@ import math
 import os.path
 import re
 import subprocess
+import sys
 import tempfile
 from typing import List, Optional, NamedTuple
 
@@ -76,7 +77,11 @@ def try_configure(binary: str, cmake_parameters: List[str]) -> ConfigureResult:
 
 def binary_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBinary]:
     versions = get_cmake_binaries(tools_dir)  # type: List[CMakeBinary]
-    longest_version_string = max([len(cmake.version) for cmake in versions]) + 1  # type: int
+    cmake_versions = [len(cmake.version) for cmake in versions]
+    if len(cmake_versions) == 0:
+        print(colored('Error: No CMake versions found in the tool dir. Make sure to run the cmake_downloader script first.', 'red'))
+        sys.exit(1)
+    longest_version_string = max(cmake_versions) + 1  # type: int
 
     lower_idx = 0  # type: int
     upper_idx = len(versions) - 1  # type: int
