@@ -4,6 +4,7 @@ import argparse
 import os.path
 import platform
 import re
+import sys
 import tarfile
 import tempfile
 import zipfile
@@ -67,19 +68,35 @@ def download_and_extract(url: str, path: str):
                 tar.extractall(path=path)
 
 
-def create_version_dict(os: str) -> Dict[str, str]:
+def create_version_dict(os: str, bitness: int) -> Dict[str, str]:
+    # create a whitelist for the current OS
+    search_terms = []
+    if os == 'macos' and bitness == 64:
+        search_terms = ['Darwin64', 'Darwin-x86_64', 'macos-universal']
+    elif os == 'linux' and bitness == 64:
+        search_terms = ['Linux-x86_64', 'linux-x86_64']
+    elif os == 'windows' and bitness == 32:
+        search_terms = ['win32-x86']
+    elif os == 'windows' and bitness == 64:
+        search_terms = ['win64-x64', 'windows-x86_64']
+    
+    if len(search_terms) == 0:
+        raise Exception(f'Unsupported OS or bitness: {os}, {bitness}')
+
     tarball_urls = get_tarball_urls()
     result = dict()
-
     for tarball_url in tarball_urls:
-        version = re.findall(r'cmake-(([0-9.]+)(-rc[0-9]+)?)', tarball_url)[0][0]
+        # skip if the tarball URL does not contain any of the search terms
+        if not any([search_term in tarball_url for search_term in search_terms]):
+            continue
 
-        if (os == 'macos' and ('Darwin64' in tarball_url or 'Darwin-x86_64' in tarball_url or 'macos-universal' in tarball_url)) \
-                or (os == 'linux' and ('Linux-x86_64' in tarball_url or 'linux-x86_64' in tarball_url)) \
-                or (os == 'windows' and ('win32-x86' in tarball_url or 'win64-x64' in tarball_url or 'windows-x86_64' in tarball_url)):
-            if version_parse(version).public not in result or \
-                    (version_parse(version).public in result and ('win64-x64' in tarball_url or 'windows-x86_64' in tarball_url)):
-                result[version_parse(version).public] = tarball_url
+        version = re.findall(r'cmake-(([0-9.]+)(-rc[0-9]+)?)', tarball_url)[0][0]
+        version_public = version_parse(version).public
+
+        if version_public in result:
+            continue
+            # print(f'Warning: Found multiple URLs for version {version_public}.')
+        result[version_public] = tarball_url
 
     return result
 
@@ -87,10 +104,14 @@ def create_version_dict(os: str) -> Dict[str, str]:
 if __name__ == '__main__':
     # get default value for current system
     default_os = 'macos' if platform.system() == 'Darwin' else 'linux' if platform.system() == 'Linux' else 'windows' if platform.system() == 'Windows' else None
+    # get the default bitness
+    default_bitness = 32 if sys.maxsize == 2**31-1 else 64 if sys.maxsize == 2**63-1 else None
 
     parser = argparse.ArgumentParser(description='Download CMake binaries.')
     parser.add_argument('--os', help=f'OS to download CMake for (default: {default_os})',
                         choices=['macos', 'linux', 'windows'], default=default_os)
+    parser.add_argument('--bitness', help=f'bitness to download CMake for (default: {default_bitness})',
+                        choices=[32, 64], default=default_bitness)
     parser.add_argument('--latest_release', action='store_true',
                         help='only download the latest release (default: False)')
     parser.add_argument('--latest_patch', action='store_true',
@@ -103,7 +124,7 @@ if __name__ == '__main__':
                         help='path to the CMake binaries (default: "tools")')
     args = parser.parse_args()
 
-    version_dict = create_version_dict(os=args.os)
+    version_dict = create_version_dict(os=args.os, bitness=args.bitness)
     versions = sorted([version_parse(version) for version in version_dict.keys()])
     print(f'Found {len(versions)} versions from {versions[0]} to {versions[-1]}.')
 
