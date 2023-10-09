@@ -99,6 +99,8 @@ if __name__ == '__main__':
                         help='only download the first minor version for each release (default: False)')
     parser.add_argument('--release_candidates', action='store_true',
                         help='also consider release candidates (default: False)')
+    parser.add_argument('--min_version', help='only download versions greater or equal than MIN_VERSION')
+    parser.add_argument('--max_version', help='only download versions less or equal than MAX_VERSION')
     parser.add_argument('--tools_directory', metavar='DIR', default='tools',
                         help='path to the CMake binaries (default: "tools")')
     args = parser.parse_args()
@@ -106,6 +108,12 @@ if __name__ == '__main__':
     version_dict = create_version_dict(os=args.os)
     versions = sorted([version_parse(version) for version in version_dict.keys()])
     print(f'Found {len(versions)} versions from {versions[0]} to {versions[-1]}.')
+
+    if args.min_version:
+        versions = sorted([version for version in versions if version >= version_parse(args.min_version)])
+
+    if args.max_version:
+        versions = sorted([version for version in versions if version <= version_parse(args.max_version)])
 
     if not args.release_candidates:
         versions = [version for version in versions if not version.is_prerelease]
