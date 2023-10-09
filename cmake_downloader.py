@@ -99,10 +99,10 @@ if __name__ == '__main__':
                         help='only download the first minor version for each release (default: False)')
     parser.add_argument('--release_candidates', action='store_true',
                         help='also consider release candidates (default: False)')
-    parser.add_argument('--tools_directory', metavar='DIR', default='tools',
-                        help='path to the CMake binaries (default: "tools")')
     parser.add_argument('--min_version', help='only download versions greater or equal than MIN_VERSION')
     parser.add_argument('--max_version', help='only download versions less or equal than MAX_VERSION')
+    parser.add_argument('--tools_directory', metavar='DIR', default='tools',
+                        help='path to the CMake binaries (default: "tools")')
     args = parser.parse_args()
 
     version_dict = create_version_dict(os=args.os)
