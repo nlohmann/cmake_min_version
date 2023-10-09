@@ -56,21 +56,25 @@ venv/bin/pip3 install -r requirements.txt
 The script [`cmake_downloader.py`](cmake_downloader.py) takes care of downloading CMake binaries:
 
 ```sh
-usage: cmake_downloader.py [-h] [--os {macos,linux}] [--latest_release]
+usage: cmake_downloader.py [-h] [--os {macos,linux,windows}] [--latest_release]
                            [--latest_patch] [--first_minor]
-                           [--release_candidates] [--tools_directory DIR]
+                           [--release_candidates] [--min_version MIN_VERSION]
+                           [--max_version MAX_VERSION] [--tools_directory DIR]
 
 Download CMake binaries.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
-  --os {macos,linux}    OS to download CMake for (default: macos)
+  --os {macos,linux,windows}
+                        OS to download CMake for (default: linux)
   --latest_release      only download the latest release (default: False)
-  --latest_patch        only download the latest patch version for each
-                        release (default: False)
-  --first_minor         only download the first minor version for each release
-                        (default: False)
+  --latest_patch        only download the latest patch version for each release (default: False)
+  --first_minor         only download the first minor version for each release (default: False)
   --release_candidates  also consider release candidates (default: False)
+  --min_version MIN_VERSION
+                        only download versions greater or equal than MIN_VERSION
+  --max_version MAX_VERSION
+                        only download versions less or equal than MAX_VERSION
   --tools_directory DIR
                         path to the CMake binaries (default: "tools")
 ```
