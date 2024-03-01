@@ -51,7 +51,15 @@ class ConfigureResult:
                 pass
 
 
-def create_version_dirs(tools_dir: Union[str, Path]) -> Dict[str, str]:
+def latest_patches(version_dict: Dict[str, str]) -> Dict[str, str]:
+    versions = sorted([version_parse(version) for version in version_dict.keys()])
+    result = []
+    for major, minor in set([(version.major, version.minor) for version in versions]):
+        result.append([version for version in versions if version.major == major and version.minor == minor][-1])
+    return {version.public: version_dict[version.public] for version in result}
+
+
+def create_version_dirs(tools_dir: Union[str, Path], latest_patch: bool) -> Dict[str, str]:
     tools_dir = Path(tools_dir).absolute()
     tools_dir.mkdir(parents=True, exist_ok=True)
 
@@ -62,7 +70,10 @@ def create_version_dirs(tools_dir: Union[str, Path]) -> Dict[str, str]:
     except FileNotFoundError:
         mtime = datetime.min
     if mtime > one_week_ago:
-        return cast(Dict[str, str], json.load(urls.open()))
+        version_dict = cast(Dict[str, str], json.load(urls.open()))
+        if latest_patch:
+            version_dict = latest_patches(version_dict)
+        return version_dict
 
     version_dict = create_version_dict('linux')
     pre_release = []
@@ -78,11 +89,13 @@ def create_version_dirs(tools_dir: Union[str, Path]) -> Dict[str, str]:
         del version_dict[version]
 
     json.dump(version_dict, urls.open('w'))
+    if latest_patch:
+        version_dict = latest_patches(version_dict)
     return version_dict
 
 
-def get_cmake_binaries(tools_dir: str) -> Tuple[List[CMakeBinary], Dict[str, str]]:
-    version_dict = create_version_dirs(tools_dir)
+def get_cmake_binaries(tools_dir: str, latest_patch: bool) -> Tuple[List[CMakeBinary], Dict[str, str]]:
+    version_dict = create_version_dirs(tools_dir, latest_patch)
 
     binaries = []  # type: List[CMakeBinary]
     if platform.system() == "Windows":
@@ -95,7 +108,8 @@ def get_cmake_binaries(tools_dir: str) -> Tuple[List[CMakeBinary], Dict[str, str
     for dirname in dirnames:
         try:
             version = re.findall(r'cmake-([^-]+)-', str(dirname))[0]
-            binaries.append(CMakeBinary(version, dirname / exe))
+            if version in version_dict:
+                binaries.append(CMakeBinary(version, dirname / exe))
         except IndexError:
             pass
 
@@ -124,8 +138,8 @@ def try_configure(binary: Union[str, Path], cmake_parameters: List[str], version
     return ConfigureResult(return_code=proc.returncode, stderr=stderr)
 
 
-def binary_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBinary]:
-    versions, version_dict = get_cmake_binaries(tools_dir)  # type: Tuple[List[CMakeBinary], Dict[str, str]]
+def binary_search(cmake_parameters: List[str], tools_dir: str, latest_patch: bool) -> Optional[CMakeBinary]:
+    versions, version_dict = get_cmake_binaries(tools_dir, latest_patch)  # type: Tuple[List[CMakeBinary], Dict[str, str]]
     cmake_versions = [len(cmake.version) for cmake in versions]
     if len(cmake_versions) == 0:
         print(colored('Error: No CMake versions found in the tool dir. Make sure to run the cmake_downloader script first.', 'red'))
@@ -167,8 +181,8 @@ def binary_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMake
     return versions[last_success_idx] if last_success_idx is not None else None
 
 
-def full_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBinary]:
-    versions, version_dict = get_cmake_binaries(tools_dir)  # type: Tuple[List[CMakeBinary], Dict[str, str]]
+def full_search(cmake_parameters: List[str], tools_dir: str, latest_patch: bool) -> Optional[CMakeBinary]:
+    versions, version_dict = get_cmake_binaries(tools_dir, latest_patch)  # type: Tuple[List[CMakeBinary], Dict[str, str]]
     longest_version_string = max([len(cmake.version) for cmake in versions]) + 1  # type: int
 
     lower_idx = 0  # type: int
@@ -204,6 +218,8 @@ def full_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBi
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Find the minimal required CMake version for a project.')
     parser.add_argument('params', type=str, nargs='+', help='parameters to pass to CMake')
+    parser.add_argument('--latest_patch', action='store_true',
+                        help='only download the latest patch version for each release (default: False)')
     parser.add_argument('--tools_directory', metavar='DIR', default='tools',
                         help='path to the CMake binaries (default: "tools")')
     parser.add_argument('--full_search', default=False,
@@ -211,9 +227,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.full_search:
-        working_version = full_search(args.params, args.tools_directory)
+        working_version = full_search(args.params, args.tools_directory, args.latest_patch)
     else:
-        working_version = binary_search(args.params, args.tools_directory)
+        working_version = binary_search(args.params, args.tools_directory, args.latest_patch)
 
     if working_version:
         print('[100%] Minimal working version: {cmake} {version}'.format(
