@@ -2,12 +2,13 @@
 
 import argparse
 import os.path
+from pathlib import Path
 import platform
 import re
 import tarfile
 import tempfile
 import zipfile
-from typing import List, Dict
+from typing import List, Dict, Union
 
 import requests
 from packaging.version import parse as version_parse
@@ -38,13 +39,14 @@ def get_tarball_urls() -> List[str]:
     return result
 
 
-def download_and_extract(url: str, path: str):
+def download_and_extract(url: str, path: Union[str, Path], clobber: bool = False) -> None:
     # derive file directory name from URL
     file_name_start_pos = url.rfind('/') + 1
     file_name = url[file_name_start_pos:]
     file_wo_ext = file_name.replace('.tar.gz', '').replace('.zip', '')
 
-    if not os.path.exists(os.path.join(path, file_wo_ext)):
+    if clobber or not os.path.exists(os.path.join(path, file_wo_ext)):
+        print(f'Downloading: {url}')
         response = requests.get(url, stream=True)
         response.raise_for_status()
         file_size = int(response.headers['Content-Length'])
