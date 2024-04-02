@@ -78,7 +78,8 @@ def try_configure(binary: Path, cmake_parameters: List[str]) -> ConfigureResult:
     proc.wait()
 
     return ConfigureResult(
-        return_code=proc.returncode, stderr=proc.stderr.read().decode("utf-8") if proc.stderr else ""
+        return_code=proc.returncode,
+        stderr=proc.stderr.read().decode("utf-8") if proc.stderr else "",
     )
 
 
