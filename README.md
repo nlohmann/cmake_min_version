@@ -33,8 +33,8 @@ As a result, `~/projects/example/CMakeLists.txt` could be adjusted to require CM
 More options:
 
 ```sh
-usage: cmake_min_version.py [-h] [--tools_directory DIR] [--full_search FULL_SEARCH]
-                            [--error_details] params [params ...]
+usage: cmake_min_version.py [-h] [--tools_directory DIR] [--full_search] [--error_details]
+                            params [params ...]
 
 Find the minimal required CMake version for a project.
 
@@ -45,9 +45,7 @@ options:
   -h, --help            show this help message and exit
   --tools_directory DIR
                         path to the CMake binaries (default: "tools")
-  --full_search FULL_SEARCH
-                        Searches using a top down approach instead of a binary search (default:
-                        False)
+  --full_search         Searches using a top down approach instead of a binary search (default: False)
   --error_details       Print the full stderr output in case of an error (default: False)
 ```
 
