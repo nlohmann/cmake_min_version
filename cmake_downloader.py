@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
 
 import argparse
-import os.path
 import platform
 import re
 import tarfile
 import tempfile
 import zipfile
+from pathlib import Path
 from typing import Dict, List
 
 import requests
 from packaging.version import parse as version_parse
 from tqdm import tqdm
 
+TIMEOUT_SECONDS = 10
+session = requests.Session()
 
 def get_folders() -> List[str]:
-    url = "https://cmake.org/files/"
-    html = requests.get(url).text
+    html = session.get(url="https://cmake.org/files/", timeout=TIMEOUT_SECONDS).text
     return list(re.findall(r">v([0-9.]+)", html))
 
 
 def get_tarball_urls_version(base_version: str) -> List[str]:
     url = f"https://cmake.org/files/v{base_version}/"
-    html = requests.get(url).text
+    html = session.get(url=url, timeout=TIMEOUT_SECONDS).text
     return sorted([url + filename for filename in re.findall(r">(cmake-[0-9rc.]+-[^.]+(?:\.tar\.gz|\.zip))", html)])
 
 
@@ -38,22 +39,22 @@ def get_tarball_urls() -> List[str]:
     return result
 
 
-def download_and_extract(url: str, path: str) -> None:
+def download_and_extract(url: str, path: Path) -> None:
     # derive file directory name from URL
     file_name_start_pos = url.rfind("/") + 1
     file_name = url[file_name_start_pos:]
     file_wo_ext = file_name.replace(".tar.gz", "").replace(".zip", "")
 
-    if not os.path.exists(os.path.join(path, file_wo_ext)):
-        response = requests.get(url, stream=True)
+    if not (path / file_wo_ext).exists():
+        response = session.get(url=url, timeout=TIMEOUT_SECONDS, stream=True)
         response.raise_for_status()
         file_size = int(response.headers["Content-Length"])
 
         tmpdir = tempfile.TemporaryDirectory()
-        full_file_name = os.path.join(tmpdir.name, file_name)
+        full_file_name = Path(tmpdir.name) / file_name
 
         progress = tqdm(total=file_size, unit="B", unit_scale=True, unit_divisor=1024)
-        with open(full_file_name, "wb+") as f:
+        with Path(full_file_name).open(mode="wb+") as f:
             for data in response:
                 progress.update(len(data))
                 f.write(data)
@@ -171,4 +172,4 @@ if __name__ == "__main__":
 
     for idx, version in enumerate(versions):
         print(f"Downloading CMake {version.public} ({idx+1}/{len(versions)})...")
-        download_and_extract(url=version_dict[version.public], path=args.tools_directory)
+        download_and_extract(url=version_dict[version.public], path=Path(args.tools_directory))
