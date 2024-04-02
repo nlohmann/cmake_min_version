@@ -164,7 +164,7 @@ if __name__ == '__main__':
     parser.add_argument('params', type=str, nargs='+', help='parameters to pass to CMake')
     parser.add_argument('--tools_directory', metavar='DIR', default='tools',
                         help='path to the CMake binaries (default: "tools")')
-    parser.add_argument('--full_search', default=False,
+    parser.add_argument('--full_search', default=False, action="store_true",
                         help='Searches using a top down approach instead of a binary search (default: False)')
     parser.add_argument("--error_details", default=False, action="store_true",
                         help="Print the full stderr output in case of an error (default: False)")
