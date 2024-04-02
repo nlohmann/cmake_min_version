@@ -30,9 +30,30 @@ cmake_minimum_required(VERSION 3.8.0)
 
 As a result, `~/projects/example/CMakeLists.txt` could be adjusted to require CMake 3.8.0.
 
+More options:
+
+```sh
+usage: cmake_min_version.py [-h] [--tools_directory DIR] [--full_search FULL_SEARCH]
+                            [--error_details] params [params ...]
+
+Find the minimal required CMake version for a project.
+
+positional arguments:
+  params                parameters to pass to CMake
+
+options:
+  -h, --help            show this help message and exit
+  --tools_directory DIR
+                        path to the CMake binaries (default: "tools")
+  --full_search FULL_SEARCH
+                        Searches using a top down approach instead of a binary search (default:
+                        False)
+  --error_details       Print the full stderr output in case of an error (default: False)
+```
+
 ## FAQ
 
-- Q: Isn't this a rather naive and inefficent approach to achieve the goal?
+- Q: Isn't this a rather naive and inefficient approach to achieve the goal?
 - A: Yes, but I am currently not aware of a better one. I would be happy to replace this repository with a link on a tool that achieves the same goal.
 
 ## Setup
@@ -133,7 +154,7 @@ The script downloads and unpacks different versions of CMake into the `tools` fo
 
 The code is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
-Copyright &copy; 2020-2023 [Niels Lohmann](http://nlohmann.me)
+Copyright &copy; 2020-2024 [Niels Lohmann](http://nlohmann.me)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

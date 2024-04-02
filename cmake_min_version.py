@@ -25,6 +25,7 @@ class ConfigureResult:
         self.success = return_code == 0  # type: bool
         self.proposed_version = None  # type: Optional[str]
         self.reason = None  # type: Optional[str]
+        self.stderr = stderr
 
         # try to read proposed minimal version from stderr output
         try:
@@ -75,7 +76,7 @@ def try_configure(binary: str, cmake_parameters: List[str]) -> ConfigureResult:
     return ConfigureResult(return_code=proc.returncode, stderr=proc.stderr.read().decode('utf-8'))
 
 
-def binary_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBinary]:
+def binary_search(cmake_parameters: List[str], tools_dir: str, error_output: bool) -> Optional[CMakeBinary]:
     versions = get_cmake_binaries(tools_dir)  # type: List[CMakeBinary]
     cmake_versions = [len(cmake.version) for cmake in versions]
     if len(cmake_versions) == 0:
@@ -110,15 +111,18 @@ def binary_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMake
             upper_idx = mid_idx - 1
         else:
             print(colored('✘ error', 'red'))
-            if result.reason:
-                print(f'       {result.reason}')
+            if error_output:
+                for line in result.stderr.splitlines():
+                    print(colored(f"       {line}", 'yellow'))
+            elif result.reason:
+                print(colored(f'       {result.reason}', 'yellow'))
             proposed_binary = [x for x in versions if x.version == result.proposed_version]
             lower_idx = versions.index(proposed_binary[0]) if len(proposed_binary) else mid_idx + 1
 
     return versions[last_success_idx] if last_success_idx is not None else None
 
 
-def full_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBinary]:
+def full_search(cmake_parameters: List[str], tools_dir: str, error_output: bool) -> Optional[CMakeBinary]:
     versions = get_cmake_binaries(tools_dir)  # type: List[CMakeBinary]
     longest_version_string = max([len(cmake.version) for cmake in versions]) + 1  # type: int
 
@@ -146,8 +150,11 @@ def full_search(cmake_parameters: List[str], tools_dir: str) -> Optional[CMakeBi
                 last_success_idx = steps - 1
         else:
             print(colored('✘ error', 'red'))
-            if result.reason:
-                print(f'       {result.reason}')
+            if error_output:
+                for line in result.stderr.splitlines():
+                    print(colored(f"       {line}", 'yellow'))
+            elif result.reason:
+                print(colored(f'       {result.reason}', 'yellow'))
 
     return versions[last_success_idx] if last_success_idx is not None else None
 
@@ -159,12 +166,14 @@ if __name__ == '__main__':
                         help='path to the CMake binaries (default: "tools")')
     parser.add_argument('--full_search', default=False,
                         help='Searches using a top down approach instead of a binary search (default: False)')
+    parser.add_argument("--error_details", default=False, action="store_true",
+                        help="Print the full stderr output in case of an error (default: False)")
     args = parser.parse_args()
 
     if args.full_search:
-        working_version = full_search(args.params, args.tools_directory)
+        working_version = full_search(args.params, args.tools_directory, error_output=args.error_details)
     else:
-        working_version = binary_search(args.params, args.tools_directory)
+        working_version = binary_search(args.params, args.tools_directory, error_output=args.error_details)
 
     if working_version:
         print('[100%] Minimal working version: {cmake} {version}'.format(
