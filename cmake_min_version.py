@@ -70,7 +70,7 @@ def get_cmake_binaries(tools_dir: str) -> List[CMakeBinary]:
 def try_configure(binary: str, cmake_parameters: List[str]) -> ConfigureResult:
     tmpdir = tempfile.TemporaryDirectory()
     proc = subprocess.Popen(
-        [binary] + cmake_parameters + ["-Wno-dev"],
+        [binary, *cmake_parameters, "-Wno-dev"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
         cwd=tmpdir.name,

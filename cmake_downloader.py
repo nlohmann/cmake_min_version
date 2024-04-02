@@ -69,7 +69,7 @@ def download_and_extract(url: str, path: str) -> None:
 
 def create_version_dict(os: str) -> Dict[str, str]:
     tarball_urls = get_tarball_urls()
-    result = dict()
+    result = {}
 
     for tarball_url in tarball_urls:
         version = re.findall(r"cmake-(([0-9.]+)(-rc[0-9]+)?)", tarball_url)[0][0]
@@ -84,12 +84,14 @@ def create_version_dict(os: str) -> Dict[str, str]:
                 os == "windows"
                 and ("win32-x86" in tarball_url or "win64-x64" in tarball_url or "windows-x86_64" in tarball_url)
             )
-        ):
-            if version_parse(version).public not in result or (
+        ) and (
+            version_parse(version).public not in result
+            or (
                 version_parse(version).public in result
                 and ("win64-x64" in tarball_url or "windows-x86_64" in tarball_url)
-            ):
-                result[version_parse(version).public] = tarball_url
+            )
+        ):
+            result[version_parse(version).public] = tarball_url
 
     return result
 
@@ -140,7 +142,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     version_dict = create_version_dict(os=args.os)
-    versions = sorted([version_parse(version) for version in version_dict.keys()])
+    versions = sorted([version_parse(version) for version in version_dict])
     print(f"Found {len(versions)} versions from {versions[0]} to {versions[-1]}.")
 
     if args.min_version:
@@ -154,14 +156,14 @@ if __name__ == "__main__":
 
     if args.latest_patch:
         result = []
-        for major, minor in set([(version.major, version.minor) for version in versions]):
+        for major, minor in {(version.major, version.minor) for version in versions}:
             result.append([version for version in versions if version.major == major and version.minor == minor][-1])
         versions = sorted(result)
 
     if args.first_minor:
         result = []
-        for major, minor in set([(version.major, version.minor) for version in versions]):
-            result.append([version for version in versions if version.major == major and version.minor == minor][0])
+        for major, minor in {(version.major, version.minor) for version in versions}:
+            result.append(next(version for version in versions if version.major == major and version.minor == minor))
         versions = sorted(result)
 
     if args.latest_release:
