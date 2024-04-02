@@ -16,6 +16,7 @@ from tqdm import tqdm
 TIMEOUT_SECONDS = 10
 session = requests.Session()
 
+
 def get_folders() -> List[str]:
     html = session.get(url="https://cmake.org/files/", timeout=TIMEOUT_SECONDS).text
     return list(re.findall(r">v([0-9.]+)", html))
