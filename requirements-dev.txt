@@ -1,4 +1,4 @@
--i requirements.txt
+-r requirements.txt
 
 ruff==0.3.5
 black==24.3.0
