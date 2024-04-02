@@ -1,0 +1,5 @@
+-i requirements.txt
+
+ruff==0.3.5
+black==24.3.0
+isort==5.13.2

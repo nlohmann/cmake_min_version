@@ -1,0 +1,25 @@
+[tool.black]
+
+line-length = 120
+target-version = ["py37", "py38", "py39", "py310", "py311", "py312"]
+
+[tool.isort]
+
+profile = "black"
+
+[tool.ruff]
+
+line-length = 120
+indent-width = 4
+target-version = "py37"
+
+[tool.ruff.lint]
+
+select = ["ALL"]
+ignore = [
+    "D",
+    "FA100",
+    "ANN101",
+    "ANN204",
+    "T201"
+]
