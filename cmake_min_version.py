@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 import argparse
-import glob
+import contextlib
 import math
-import os.path
 import platform
 import re
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
+from time import time
 from typing import List, NamedTuple, Optional
 
 from packaging.version import parse as version_parse
@@ -17,7 +18,7 @@ from termcolor import colored
 
 class CMakeBinary(NamedTuple):
     version: str
-    binary: str
+    binary: Path
 
 
 class ConfigureResult:
@@ -49,25 +50,24 @@ class ConfigureResult:
                 pass
 
 
-def get_cmake_binaries(tools_dir: str) -> List[CMakeBinary]:
+def get_cmake_binaries(tools_dir: Path) -> List[CMakeBinary]:
+    start_time = time()
     binaries = []  # type: List[CMakeBinary]
     if platform.system() == "Windows":
-        filenames = glob.glob(tools_dir + "/**/bin/cmake.exe", recursive=True)
+        filenames = tools_dir.rglob("**/bin/cmake.exe")
     else:
-        filenames = glob.glob(tools_dir + "/**/bin/cmake", recursive=True)
+        filenames = tools_dir.rglob("**/bin/cmake")
 
     for filename in filenames:
-        try:
-            version = re.findall(r"cmake-([^-]+)-", filename)[0]
-            binaries.append(CMakeBinary(version, os.path.abspath(filename)))
-        except IndexError:
-            pass
+        with contextlib.suppress(IndexError):
+            version = re.findall(r"cmake-([^-]+)-", str(filename))[0]
+            binaries.append(CMakeBinary(version, Path(filename).resolve()))
 
-    print(f"Found {len(binaries)} CMake binaries from directory {tools_dir}\n")
+    print(f"Found {len(binaries)} CMake binaries from directory {tools_dir} in {time()-start_time:.2f} seconds\n")
     return sorted(binaries, key=lambda x: version_parse(x.version))
 
 
-def try_configure(binary: str, cmake_parameters: List[str]) -> ConfigureResult:
+def try_configure(binary: Path, cmake_parameters: List[str]) -> ConfigureResult:
     tmpdir = tempfile.TemporaryDirectory()
     proc = subprocess.Popen(
         [binary, *cmake_parameters, "-Wno-dev"],
@@ -77,10 +77,12 @@ def try_configure(binary: str, cmake_parameters: List[str]) -> ConfigureResult:
     )
     proc.wait()
 
-    return ConfigureResult(return_code=proc.returncode, stderr=proc.stderr.read().decode("utf-8"))
+    return ConfigureResult(
+        return_code=proc.returncode, stderr=proc.stderr.read().decode("utf-8") if proc.stderr else ""
+    )
 
 
-def binary_search(cmake_parameters: List[str], tools_dir: str, error_output: bool) -> Optional[CMakeBinary]:
+def binary_search(*, cmake_parameters: List[str], tools_dir: Path, error_output: bool) -> Optional[CMakeBinary]:
     versions = get_cmake_binaries(tools_dir)  # type: List[CMakeBinary]
     cmake_versions = [len(cmake.version) for cmake in versions]
     if len(cmake_versions) == 0:
@@ -117,7 +119,7 @@ def binary_search(cmake_parameters: List[str], tools_dir: str, error_output: boo
             flush=True,
         )
 
-        result = try_configure(cmake_binary.binary, cmake_parameters)  # type: ConfigureResult
+        result = try_configure(binary=cmake_binary.binary, cmake_parameters=cmake_parameters)  # type: ConfigureResult
 
         if result.success:
             print(colored("✔ works", "green"))
@@ -136,24 +138,15 @@ def binary_search(cmake_parameters: List[str], tools_dir: str, error_output: boo
     return versions[last_success_idx] if last_success_idx is not None else None
 
 
-def full_search(cmake_parameters: List[str], tools_dir: str, error_output: bool) -> Optional[CMakeBinary]:
+def full_search(*, cmake_parameters: List[str], tools_dir: Path, error_output: bool) -> Optional[CMakeBinary]:
     versions = get_cmake_binaries(tools_dir)  # type: List[CMakeBinary]
     longest_version_string = max([len(cmake.version) for cmake in versions]) + 1  # type: int
-
-    lower_idx = 0  # type: int
-    upper_idx = len(versions) - 1  # type: int
     last_success_idx = None  # type: Optional[int]
 
-    steps = 0  # type: int
-
-    for cmake_binary in versions:
-        steps += 1
-        remaining_versions = upper_idx - lower_idx + 1  # type: int
-        remaining_steps = int(math.ceil(math.log2(remaining_versions)))  # type: int
-
+    for steps, cmake_binary in enumerate(versions):
         print(
             "[{progress:3.0f}%] CMake {cmake_version:{longest_version_string}}".format(
-                progress=100.0 * float(steps - 1) / (steps + remaining_steps),
+                progress=100.0 * float(steps) / len(versions),
                 cmake_version=cmake_binary.version,
                 longest_version_string=longest_version_string,
             ),
@@ -161,13 +154,14 @@ def full_search(cmake_parameters: List[str], tools_dir: str, error_output: bool)
             flush=True,
         )
 
-        result = try_configure(cmake_binary.binary, cmake_parameters)  # type: ConfigureResult
+        result = try_configure(binary=cmake_binary.binary, cmake_parameters=cmake_parameters)  # type: ConfigureResult
 
         if result.success:
             print(colored("✔ works", "green"))
-            if not last_success_idx or last_success_idx > steps - 1:
-                last_success_idx = steps - 1
+            if not last_success_idx:
+                last_success_idx = steps
         else:
+            last_success_idx = None
             print(colored("✘ error", "red"))
             if error_output:
                 for line in result.stderr.splitlines():
@@ -202,9 +196,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.full_search:
-        working_version = full_search(args.params, args.tools_directory, error_output=args.error_details)
+        working_version = full_search(
+            cmake_parameters=args.params,
+            tools_dir=Path(args.tools_directory),
+            error_output=args.error_details,
+        )
     else:
-        working_version = binary_search(args.params, args.tools_directory, error_output=args.error_details)
+        working_version = binary_search(
+            cmake_parameters=args.params,
+            tools_dir=Path(args.tools_directory),
+            error_output=args.error_details,
+        )
 
     if working_version:
         print(
