@@ -24,6 +24,7 @@ jobs:
       - name: Run cmake_downloader.py
         run: python cmake_downloader.py --latest_release
       - name: Style checks
+        if: matrix.python-version == '3.12'
         run: |
           black --check *.py
           isort --check *.py
