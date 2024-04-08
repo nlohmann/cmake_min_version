@@ -49,6 +49,17 @@ class ConfigureResult:
             except IndexError:
                 pass
 
+    def print(self, error_output: bool) -> None:
+        if self.success:
+            print(colored("✔ works", "green"))
+        else:
+            print(colored("✘ error", "red"))
+            if error_output:
+                for line in self.stderr.splitlines():
+                    print(colored(f"       {line}", "yellow"))
+            elif self.reason:
+                print(colored(f"       {self.reason}", "yellow"))
+
 
 def get_cmake_binaries(tools_dir: Path) -> List[CMakeBinary]:
     start_time = time()
@@ -83,28 +94,23 @@ def try_configure(binary: Path, cmake_parameters: List[str]) -> ConfigureResult:
     )
 
 
-def binary_search(*, cmake_parameters: List[str], tools_dir: Path, error_output: bool) -> Optional[CMakeBinary]:
-    versions = get_cmake_binaries(tools_dir)  # type: List[CMakeBinary]
-    cmake_versions = [len(cmake.version) for cmake in versions]
-    if len(cmake_versions) == 0:
-        print(
-            colored(
-                "Error: No CMake versions found in the tool dir. Make sure to run the cmake_downloader script first.",
-                "red",
-            ),
-        )
-        sys.exit(1)
-    longest_version_string = max(cmake_versions) + 1  # type: int
+def binary_search(
+    *,
+    cmake_binaries: List[CMakeBinary],
+    cmake_parameters: List[str],
+    error_output: bool,
+) -> Optional[CMakeBinary]:
+    longest_version_string = max([len(cmake.version) for cmake in cmake_binaries]) + 1  # type: int
 
     lower_idx = 0  # type: int
-    upper_idx = len(versions) - 1  # type: int
+    upper_idx = len(cmake_binaries) - 1  # type: int
     last_success_idx = None  # type: Optional[int]
 
     steps = 0  # type: int
 
     while lower_idx <= upper_idx:
         mid_idx = int((lower_idx + upper_idx) / 2)  # type: int
-        cmake_binary = versions[mid_idx]  # type: CMakeBinary
+        cmake_binary = cmake_binaries[mid_idx]  # type: CMakeBinary
 
         steps += 1
         remaining_versions = upper_idx - lower_idx + 1  # type: int
@@ -122,32 +128,30 @@ def binary_search(*, cmake_parameters: List[str], tools_dir: Path, error_output:
 
         result = try_configure(binary=cmake_binary.binary, cmake_parameters=cmake_parameters)  # type: ConfigureResult
 
+        result.print(error_output=error_output)
         if result.success:
-            print(colored("✔ works", "green"))
             last_success_idx = mid_idx
             upper_idx = mid_idx - 1
         else:
-            print(colored("✘ error", "red"))
-            if error_output:
-                for line in result.stderr.splitlines():
-                    print(colored(f"       {line}", "yellow"))
-            elif result.reason:
-                print(colored(f"       {result.reason}", "yellow"))
-            proposed_binary = [x for x in versions if x.version == result.proposed_version]
-            lower_idx = versions.index(proposed_binary[0]) if len(proposed_binary) else mid_idx + 1
+            proposed_binary = [x for x in cmake_binaries if x.version == result.proposed_version]
+            lower_idx = cmake_binaries.index(proposed_binary[0]) if len(proposed_binary) else mid_idx + 1
 
-    return versions[last_success_idx] if last_success_idx is not None else None
+    return cmake_binaries[last_success_idx] if last_success_idx is not None else None
 
 
-def full_search(*, cmake_parameters: List[str], tools_dir: Path, error_output: bool) -> Optional[CMakeBinary]:
-    versions = get_cmake_binaries(tools_dir)  # type: List[CMakeBinary]
-    longest_version_string = max([len(cmake.version) for cmake in versions]) + 1  # type: int
+def full_search(
+    *,
+    cmake_binaries: List[CMakeBinary],
+    cmake_parameters: List[str],
+    error_output: bool,
+) -> Optional[CMakeBinary]:
+    longest_version_string = max([len(cmake.version) for cmake in cmake_binaries]) + 1  # type: int
     last_success_idx = None  # type: Optional[int]
 
-    for steps, cmake_binary in enumerate(versions):
+    for steps, cmake_binary in enumerate(cmake_binaries):
         print(
             "[{progress:3.0f}%] CMake {cmake_version:{longest_version_string}}".format(
-                progress=100.0 * float(steps) / len(versions),
+                progress=100.0 * float(steps) / len(cmake_binaries),
                 cmake_version=cmake_binary.version,
                 longest_version_string=longest_version_string,
             ),
@@ -157,20 +161,10 @@ def full_search(*, cmake_parameters: List[str], tools_dir: Path, error_output: b
 
         result = try_configure(binary=cmake_binary.binary, cmake_parameters=cmake_parameters)  # type: ConfigureResult
 
-        if result.success:
-            print(colored("✔ works", "green"))
-            if not last_success_idx:
-                last_success_idx = steps
-        else:
-            last_success_idx = None
-            print(colored("✘ error", "red"))
-            if error_output:
-                for line in result.stderr.splitlines():
-                    print(colored(f"       {line}", "yellow"))
-            elif result.reason:
-                print(colored(f"       {result.reason}", "yellow"))
+        result.print(error_output=error_output)
+        last_success_idx = steps if result.success and not last_success_idx else None
 
-    return versions[last_success_idx] if last_success_idx is not None else None
+    return cmake_binaries[last_success_idx] if last_success_idx is not None else None
 
 
 if __name__ == "__main__":
@@ -196,16 +190,27 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    cmake_binaries = get_cmake_binaries(tools_dir=Path(args.tools_directory))
+    if len(cmake_binaries) == 0:
+        print(
+            colored(
+                f"Error: No CMake versions found in the tools directory '{args.tools_directory}'. "
+                "Make sure to run the cmake_downloader script first.",
+                "red",
+            ),
+        )
+        sys.exit(1)
+
     if args.full_search:
         working_version = full_search(
+            cmake_binaries=cmake_binaries,
             cmake_parameters=args.params,
-            tools_dir=Path(args.tools_directory),
             error_output=args.error_details,
         )
     else:
         working_version = binary_search(
+            cmake_binaries=cmake_binaries,
             cmake_parameters=args.params,
-            tools_dir=Path(args.tools_directory),
             error_output=args.error_details,
         )
 
